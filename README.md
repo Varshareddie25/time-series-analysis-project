@@ -1,1 +1,65 @@
 # time-series-analysis-project
+# Install and load the necessary packages
+install.packages("quantmod")
+library(quantmod)
+
+install.packages("ggplot2")
+library(ggplot2)
+# Fetch historical stock data for Apple Inc. (AAPL) from Yahoo Finance
+getSymbols("AAPL", from = "2020-01-01", to = "2021-12-31")
+
+# View the first few rows of the data
+head(AAPL)
+
+ 
+# Clean the data by removing missing values
+AAPL_clean <- na.omit(AAPL)
+
+# Calculate daily returns
+AAPL_clean$Returns <- dailyReturn(AAPL_clean$AAPL.Adjusted)
+
+# Remove outliers using z-score (assuming you have 'zoo' package installed)
+library(zoo)
+z_scores <- scale(AAPL_clean$Returns)
+AAPL_clean <- AAPL_clean[abs(z_scores) < 3, ]
+
+# Check summary statistics of the cleaned data
+summary(AAPL_clean$Returns)
+
+ 
+
+# Calculate 50-day and 200-day moving averages
+AAPL_clean$MA_50 <- SMA(AAPL_clean$AAPL.Adjusted, n = 50)
+AAPL_clean$MA_200 <- SMA(AAPL_clean$AAPL.Adjusted, n = 200)
+
+# Calculate historical volatility
+AAPL_clean$Volatility <- runSD(AAPL_clean$Returns, n = 20) * sqrt(252)
+
+# Visualize stock data with moving averages and volatility
+ggplot(data = AAPL_clean, aes(x = Index)) +
+geom_line(aes(y = AAPL.Adjusted), color = "blue", size = 1) +
+geom_line(aes(y = MA_50), color = "orange", size = 1) +
+geom_line(aes(y = MA_200), color = "red", size = 1) +
+labs(title = "Apple Inc. Stock Price with Moving Averages",
+	x = "Date", y = "Price") +
+theme_minimal()
+
+ 
+
+# Plot the closing price of AAPL
+chartSeries(AAPL$AAPL.Close, type = "line", name = "AAPL Closing Price")
+
+ 
+
+# Calculate 20-day, 50-day and 200-day moving averages
+AAPL$SMA_20 <- SMA(AAPL$AAPL.Close, n = 20)
+AAPL$SMA_50 <- SMA(AAPL$AAPL.Close, n = 50)
+AAPL$SMA_100 <- SMA(AAPL$AAPL.Close, n = 100)
+
+# Plot the moving averages
+chart_Series(AAPL, name = "AAPL Moving Averages")
+add_TA(AAPL$SMA_20, on = 1, col = "blue", lty = 1)
+add_TA(AAPL$SMA_50, on = 1, col = "red", lty = 1)
+add_TA(AAPL$SMA_100, on = 1, col = "green", lty = 1)
+
+
